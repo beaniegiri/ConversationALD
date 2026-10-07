@@ -11,6 +11,8 @@ import argparse
 
 
 def run_eval(checkpoint_path, args):
+    from utils.train_eval_utils import evaluate_model
+
     model_name = args.model
     size = args.size
     validation = args.validation
@@ -81,6 +83,7 @@ if __name__ == "__main__":
     models_string = json.dumps(all_model_names)
     pretrained_model_string = json.dumps(all_base_pretrained_models)
 
+    parser.add_argument('--checkpoint', type=str, required=True, help='path to the trained model checkpoint')
     parser.add_argument('--model', type=str, default='gat-test', help='the model to use, can take one of the following values: ' + models_string)
     # Options are "bert-base-uncased", "bert-base-cased", "roberta-base", "xlm-roberta-base", "allenai/longformer-base-4096", "answerdotai/ModernBERT-base", "answerdotai/ModernBERT-large" 
     parser.add_argument('--pretrained-model-name', type=str, default="bert-base-uncased", help='name for pretrained text model to use to generate text embeddings, can take one of the following values: ' + pretrained_model_string)
@@ -98,5 +101,5 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    run_eval("path_to_repo/models/checkpoints/gat-recent-3l-42_3906579.pt" , args)
+    run_eval(args.checkpoint, args)
                                    

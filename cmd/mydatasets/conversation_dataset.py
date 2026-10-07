@@ -3,8 +3,9 @@ import copy
 import torch
 from typing import Optional, Callable
 import numpy as np
+from pathlib import Path
 from torch_geometric.data import Dataset
-from .pyg_datasets.pyg_dataset import GraphConversationDataset
+from .graph_conversation_datasets.graph_conversation_dataset import GraphConversationDataset
 
 # This code was strongly inspired by: https://github.com/liamhebert/MultiModalDiscussionTransformer
 
@@ -98,11 +99,9 @@ class ConversationDataset(Dataset):
 
 def create_ald_conversation_dataset(size='medium', validation=True):
     assert size in ["small", "small-1000", "medium", "large", "cad", "cad-small", "print"] 
-    # Set SLURM_TMPDIR
-    # Switch to the right directory, depending on local or server configuration
-    # Path removed for anonymization
-    #os.environ['SLURM_TMPDIR'] = "path_to_repo/data"
-    os.environ['SLURM_TMPDIR'] = "path_to_repo/data"
+    os.environ.setdefault(
+        "SLURM_TMPDIR", str(Path(__file__).resolve().parents[2] / "data")
+    )
     dataset = ConversationDataset(size, root="balanced_cad")
 
     path = os.path.expandvars("$SLURM_TMPDIR")
@@ -206,4 +205,3 @@ class ConversationDatasetLoader:
     
     def get_val_data(self):
         return [self.dataset.get(idx) for idx in self.val_idx]
-

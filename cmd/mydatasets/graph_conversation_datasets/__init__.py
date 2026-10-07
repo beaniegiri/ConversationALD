@@ -1,1 +1,1 @@
-from .pyg_dataset import GraphConversationDataset
+from .graph_conversation_dataset import GraphConversationDataset

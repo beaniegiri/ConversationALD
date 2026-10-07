@@ -48,4 +48,5 @@ cd $SLURM_TMPDIR
 
 echo "starting the evaluation..."
 
-python main_evaluate.py
+: "${CHECKPOINT:?Set CHECKPOINT to the trained checkpoint path}"
+python main_evaluate.py --checkpoint "$CHECKPOINT"

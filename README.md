@@ -39,11 +39,29 @@ ConversationALD/
 Clone the repository:
 ``` git clone https://github.com/celianouri/ConversationALD.git``` 
 ``` cd ConversationALD``` 
-Create and activate a virtual environment (using python or conda):
-``` python3 -m venv venv``` 
-``` source venv/bin/activate``` 
+Create and activate a Python 3.11 virtual environment:
+```bash
+python3.11 -m venv venv
+source venv/bin/activate
+```
 Install dependencies:
-``` pip install -r requirements.txt``` 
+```bash
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+```
+
+PyGraphviz is optional and is only needed for attention-graph visualization;
+skip this section if you only need to train or evaluate models. Its native
+extension must compile against your Python and system Graphviz versions, so
+the install can fail when those versions are incompatible. The reported build
+was using Python 3.14; use the recommended Python 3.11 environment for this
+project.
+
+If you need attention-graph visualization, install Graphviz and its development
+headers before installing a compatible PyGraphviz version:
+```bash
+sudo apt-get install graphviz libgraphviz-dev
+```
 
 ## **Dataset Preparation**
 
@@ -64,7 +82,13 @@ Note: Due to Reddit's data policies, full conversation data may not be publicly 
 ## **Running the Codee**
 
 ### 1. Preprocess the Data
-Ensure that the CAD dataset and the extracted Reddit conversations are formatted as graph.pt files, placed appropriately within the data/ directory, as `graph-xx.pt` files. 
+The graph files are not included in this repository. For local execution, set
+`SLURM_TMPDIR` to the data directory. It must contain the appropriate CAD split
+index files (for example, `cad-train-idx-small.txt`,
+`cad-val-idx-small.txt`, and `cad-test-idx-small.txt` for `cad-small`) and a
+`balanced_cad/processed/` directory containing the corresponding
+`graph-<index>.pt` files. If `SLURM_TMPDIR` is not set, the code uses the
+repository's `data/` directory.
 
 ### 2. Train the Model
 Modify the arguments in the `experiments.py` file, specifying the model name, number of layers, dataset size, trimming strategy, and graph construction method (directed, with or without temporal edges).
@@ -75,15 +99,29 @@ or using the provided batch script (SLURM):
 ```bash cmd/run_train.batch```
 
 ### 3. Evaluate the Model
-After training, evaluate the model's performance by modifying the `cmd/main_evaluate.py` arguments to match the ones used for training. Also, update the path to the model checkpoint in that same file.
+To evaluate a trained checkpoint, run the evaluator from the repository root and pass its checkpoint path. Use the same model settings used when the checkpoint was trained; in particular, match the model name, number of layers, dataset size, trimming strategy, and graph edge options.
 
-Then, initiate model evaluation locally using the python file 
-``` python cmd/main_evaluate.py```
+```bash
+# Set this to the data directory containing the CAD split-index files and
+# balanced_cad/processed/graph-*.pt files (defaults to the repository's data/).
+export SLURM_TMPDIR="$PWD/data"
+export WANDB_MODE=offline
+python cmd/main_evaluate.py \
+  --checkpoint "/path/to/checkpoint.pt" \
+  --model gat-test \
+  --size cad-small \
+  --num-layers 5
+```
 
-or using the provided batch script (SLURM):
-``` bash cmd/run_eval.batch``` 
-For CPU-based evaluation, use:
-``` bash cmd/run_eval_cpu.batch``` 
+Replace the checkpoint path and model options with the values for your run.
+The evaluator reports test loss, accuracy, precision, recall, and F1, and writes
+per-example predictions to a TSV file in the current directory. The dataset and
+checkpoint are not included in this repository; the evaluation cannot run until
+you have obtained and prepared the data described above.
+
+For SLURM-based evaluation, set `CHECKPOINT` to the checkpoint path and update
+the model options in `cmd/run_eval.batch` to match training before submitting.
+For CPU-based evaluation, do the same in `cmd/run_eval_cpu.batch`.
 
 Evaluation metrics and results will be outputted to the console, or saved as specified in the evaluation scripts (out and err files).
 
